@@ -1,0 +1,57 @@
+The basic answer to this question is "use a skewed distribution library". All programming languages should have a library you can import which has some such functions. For this usecase, a Beta distribution is a nice option since it is highly modifiable using the given parameters.
+
+For example, generating random numbers on a Beta(1,2) distribution creates a linearly bottom-skewed distribution. You can use this visualiser to see how the parameters affect the distribution:
+https://homepage.divms.uiowa.edu/~mbognar/applets/beta.html
+
+~~~
+
+Now, I was actually pretty interested in this topic so I spent some hours last night researching how this would work if you don't use a library. It's actually a pretty interesting statistics question!
+
+Our goal:
+We want to find a function that takes a uniform pseudorandom number between 0 and 1 - such as is produced by the typical rand() function of any programming language - and transforms it into a skewed distribution.
+
+First off, we need a skewed distribution to work off of. In our case, we'll take the Beta distribution as mentioned above.
+
+However, we still need to somehow transform our uniform pseudorandom values into a Beta-distributed output. Consider the Cumulative Distribution Function (CDF) of our distribution - in other words, the probability that our random variable X <= x. For a uniform distribution, the probability that X <= x is just x, since it's uniform (for example, the chance of getting a number less than or equal to 0.3 is 30%!).
+
+We can take advantage of this relationship in what is called the Inverse Transform technique. Using this, we find that the inverse of the CDF of our desired distribution applied to a uniform random variable U has a distribution equal to our desired distribution! In other words, take our CDF F(x) and take the inverse F^-1(x), then solve for X = F^-1(U) to transform the rand() input into our desired output.
+
+You can find the math behind how the Inverse Transform technique works in the Intuitions section of the Wikipedia article:
+https://en.wikipedia.org/wiki/Inverse_transform_sampling#Intuitions
+
+For the case of Beta(1,2) specifically, we first find the formula for the CDF of the Beta distribution:
+https://en.wikipedia.org/wiki/Beta_distribution#Cumulative_distribution_function
+
+Then, we calculate the value F(a,b) of the CDF for our given parameters a=1, b=2:
+f(1,2) = x^(1-1) * (1-x)^(2-1) = (1-x)
+F(1,2) = integral{0->x}(1-x) / integral{0->1}(1-x) = (x - x^2/2) / 0.5 = 2x - x^2
+F(1,2) = 2x - x^2
+
+inverse F(1,2) = F^-1(1,2):
+x = 2y - y^2
+-x = -2y + y^2
+-x + 1 = y^2 - 2y + 1
+-x + 1 = (y - 1)^2
++-sqrt(1-x) = y - 1
+1 +- sqrt(1-x) = y
+F^-1(1,2) = 1 - sqrt(1-x) // plus/minus becomes minus by testing values
+
+Then, passing our uniform distribution U as the parameter of the inverse CDF:
+X = 1 - sqrt(1-U)
+
+So, finally, in our program, we can sample from U using rand() or some equivalent, then run it through our function we just defined to sample values on the distribution Beta(1,2)!
+
+Primary reference, for those interested in learning more:
+https://math.stackexchange.com/a/2480717
+
+Beta distribution reference:
+https://en.wikipedia.org/wiki/Beta_distribution#Probability_density_function
+
+Beta distribution visualizer:
+https://homepage.divms.uiowa.edu/~mbognar/applets/beta.html
+
+Inverse transform technique:
+https://en.wikipedia.org/wiki/Inverse_transform_sampling
+
+Beta distribution CDF value calculator:
+https://www.danielsoper.com/statcalc/calculator.aspx?id=94
